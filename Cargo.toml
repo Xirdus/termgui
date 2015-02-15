@@ -1,0 +1,8 @@
+[package]
+name = "termgui"
+version = "0.0.1"
+authors = ["Xirdus <xirdus@gmail.com>"]
+
+[target.x86_64-pc-windows-gnu.dependencies]
+kernel32-sys = "*"
+winapi = "*"
