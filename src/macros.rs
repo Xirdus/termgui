@@ -7,18 +7,17 @@ macro_rules! trivial_error {
         use std::fmt::Formatter;
         use std::fmt::Error as FmtError;
         $(
-            const DESC: &'static str = $desc;
             pub struct $name;
 
             impl Display for $name {
                 fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-                    DESC.fmt(f)
+                    self.description().fmt(f)
                 }
             }
 
             impl Error for $name {
                 fn description(&self) -> &str {
-                    DESC
+                    $desc
                 }
 
                 fn cause(&self) -> Option<&Error> {

@@ -3,6 +3,12 @@ name = "termgui"
 version = "0.0.1"
 authors = ["Xirdus <xirdus@gmail.com>"]
 
-[target.x86_64-pc-windows-gnu.dependencies]
-kernel32-sys = "*"
-winapi = "*"
+#[target.x86_64-pc-windows-gnu.dependencies]
+#kernel32-sys = "*"
+#winapi = "*"
+
+[target.x86_64-pc-windows-gnu.dependencies.winapi]
+git = "https://github.com/retep998/winapi-rs"
+
+[target.x86_64-pc-windows-gnu.dependencies.kernel32-sys]
+git = "https://github.com/retep998/winapi-rs"

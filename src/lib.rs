@@ -2,11 +2,5 @@
 #![feature(collections)]
 
 mod macros;
-mod color;
-
-pub use color::*;
-
-#[cfg(windows)]
-mod windows;
-#[cfg(windows)]
-pub use windows::*;
+pub mod color;
+pub mod terminal;
