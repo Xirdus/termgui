@@ -1,6 +1,7 @@
-#![feature(core)]
+//! A library for creating GUI in command line applications. Similar in concept to ncurses, but with
+//! much more modern design.
+
 #![feature(collections)]
 
-mod macros;
 pub mod color;
 pub mod terminal;

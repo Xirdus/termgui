@@ -1,12 +1,13 @@
 extern crate "kernel32-sys" as kernel32_sys;
 extern crate winapi;
-use super::{Terminal, TerminalError, ResizeError, CursorError};
 use std::mem::uninitialized;
 use std::ptr::null_mut;
 use std::cmp::{min, max};
 use color::{Color, ColorPair};
 use color::Color::*;
+use terminal::Terminal;
 
+/// Platform specific object that allows for interacting with terminal the process runs in.
 pub struct SystemTerminal {
     buffer: Vec<winapi::CHAR_INFO>,
     term_width: u16,
@@ -17,12 +18,13 @@ pub struct SystemTerminal {
     old_out_handle: winapi::HANDLE,
 }
 
-pub fn init_terminal() -> Result<SystemTerminal,TerminalError> {
+/// Initializes system terminal. **WARNING: Must NOT be called more than once in runtime.**
+pub fn init_terminal() -> Result<SystemTerminal,()> {
     unsafe {
         if kernel32_sys::GetConsoleWindow().is_null() {
             if kernel32_sys::AllocConsole() == winapi::FALSE
             || kernel32_sys::GetConsoleWindow().is_null() {
-                return Err(TerminalError)
+                return Err(())
             }
         }
 
@@ -56,12 +58,12 @@ impl Terminal for SystemTerminal {
         (self.term_width, (self.buffer.len() / self.term_width as usize) as u16)
     }
 
-    fn resize(&mut self, width: u16, height: u16) -> Result<(),ResizeError> {
+    fn resize(&mut self, width: u16, height: u16) -> Result<(),()> {
         let mut rt = Ok(());
         self.update_console_window(width, height);
         let (new_width, new_height) = self.get_real_size();
         if (width, height) != (new_width, new_height) {
-            rt = Err(ResizeError);
+            rt = Err(());
             self.update_console_window(new_width, new_height);
         }
         self.set_dimensions(new_width, new_height);
@@ -72,7 +74,7 @@ impl Terminal for SystemTerminal {
         (self.cur_pos as u16 % self.term_width, (self.cur_pos / self.term_width as usize) as u16)
     }
 
-    fn set_cursor_pos(&mut self, x: u16, y: u16) ->  Result<(),CursorError> {
+    fn set_cursor_pos(&mut self, x: u16, y: u16) ->  Result<(),()> {
         unsafe {
             kernel32_sys::SetConsoleCursorPosition(self.out_handle,
                 winapi::COORD {
@@ -89,7 +91,7 @@ impl Terminal for SystemTerminal {
         if (x, y) == (real_x, real_y) {
             Ok(())
         } else {
-            Err(CursorError)
+            Err(())
         }
     }
 
