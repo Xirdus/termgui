@@ -47,3 +47,10 @@ mod windows;
 pub use self::windows::SystemTerminal;
 #[cfg(windows)]
 pub use self::windows::init_terminal;
+
+#[cfg(unix)]
+mod ncurses;
+#[cfg(unix)]
+pub use self::ncurses::SystemTerminal;
+#[cfg(unix)]
+pub use self::ncurses::init_terminal;
