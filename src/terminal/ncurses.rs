@@ -1,7 +1,7 @@
 extern crate ncurses;
-extern crate libc;
+use std::mem::uninitialized;
 use std::ptr::null_mut;
-use color::{Color, ColorPair};
+use color::ColorPair;
 use color::Color::*;
 use terminal::Terminal;
 
@@ -30,19 +30,29 @@ pub fn init_terminal() -> Result<SystemTerminal,()> {
 
 impl Terminal for SystemTerminal {
     fn size(&self) -> (u16, u16) {
-        (0, 0)
+        let mut x = unsafe { uninitialized() };
+        let mut y = unsafe { uninitialized() };
+        ncurses::getmaxyx(ncurses::stdscr, &mut y, &mut x);
+        (x as u16, y as u16)
     }
 
-    fn resize(&mut self, width: u16, height: u16) -> Result<(),()> {
-        Err(())
+    fn resize(&mut self, _: u16, _: u16) -> Result<(),()> {
+        Err(()) // unsupported
     }
 
     fn get_cursor_pos(&self) -> (u16, u16) {
-        (0, 0)
+        let mut x = unsafe { uninitialized() };
+        let mut y = unsafe { uninitialized() };
+        ncurses::getyx(ncurses::stdscr, &mut y, &mut x);
+        (x as u16, y as u16)
     }
 
     fn set_cursor_pos(&mut self, x: u16, y: u16) ->  Result<(),()> {
-        Err(())
+        if ncurses::mv(y as i32, x as i32) == ncurses::OK {
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
     fn get_default_color(&self) -> ColorPair {
@@ -64,7 +74,7 @@ impl Terminal for SystemTerminal {
 
 impl Drop for SystemTerminal {
     fn drop(&mut self) {
-
+        ncurses::endwin();
     }
 }
 
