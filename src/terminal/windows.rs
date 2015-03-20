@@ -104,20 +104,40 @@ impl Terminal for SystemTerminal {
     }
 
     #[allow(unused_must_use)]
-    fn write_colored<T>(&mut self, s: &str, colors: T) where T: Iterator<Item=ColorPair> {
-        for ((out, char), col) in self.buffer[self.cur_pos..].iter_mut()
-                                  .zip(s.utf16_units())
-                                  .zip(colors) {
+    fn print_at<T>(&mut self, x: i16, y: i16, line: T) where T: Iterator<Item=(char, ColorPair)>
+    {
+        if y < 0 || y as usize > self.buffer.len() / self.term_width as usize {
+            return;
+        }
+        let s = max(0 - x, 0) as usize;
+        let r = (y * self.term_width as i16 + if s == 0 { x } else { 0 }) as usize
+            ..min(((y + 1) * self.term_width as i16) as usize, self.buffer.len());
+
+        for (out, (char, col)) in self.buffer[r].iter_mut()
+                                                .zip(line.skip(s).take_while(|&(c, _)| c != '\n')) {
             *out = winapi::CHAR_INFO {
-                Char: char,
+                Char: char as u16,
                 Attributes: convert_color_pair(col.compose(self.default_color)),
             };
-            self.cur_pos += 1;
         }
-        self.cur_pos = min(self.cur_pos, self.buffer.len() - 1);
-        let (x, y) = self.get_cursor_pos();
-        self.set_cursor_pos(x, y);
-        self.present();
+    }
+
+    fn present(&mut self) {
+        let (x, y) = self.size();
+        let (x, y) = (x as i16, y as i16);
+        unsafe {
+            kernel32_sys::WriteConsoleOutputW(self.out_handle, self.buffer.as_ptr(),
+                winapi::COORD {
+                    X: x, Y: y
+                }, winapi::COORD {
+                    X: 0, Y: 0
+                }, &mut winapi::SMALL_RECT {
+                    Left: 0,
+                    Top: 0,
+                    Right: x - 1,
+                    Bottom: y - 1,
+                });
+        }
     }
 }
 
@@ -161,24 +181,6 @@ impl SystemTerminal {
                 Char: 0,
                 Attributes: convert_color_pair(self.default_color),
             });
-    }
-
-    fn present(&mut self) {
-        let (x, y) = self.size();
-        let (x, y) = (x as i16, y as i16);
-        unsafe {
-            kernel32_sys::WriteConsoleOutputW(self.out_handle, self.buffer.as_ptr(),
-                winapi::COORD {
-                    X: x, Y: y
-                }, winapi::COORD {
-                    X: 0, Y: 0
-                }, &mut winapi::SMALL_RECT {
-                    Left: 0,
-                    Top: 0,
-                    Right: x - 1,
-                    Bottom: y - 1,
-                });
-        }
     }
 }
 
