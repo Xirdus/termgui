@@ -28,24 +28,21 @@ pub trait Terminal {
     fn set_default_color(&mut self, color: ColorPair);
 
     /// Writes text string to the terminal at current position using default color. The cursor is
-    /// moved after the text written, or at the end position in the terminal if there's no room
-    /// left.
+    /// moved after the text written.
     fn write(&mut self, s: &str) {
         let color = self.get_default_color();
         self.write_in_color(s, color);
     }
 
     /// Writes text string to the terminal at current position using given color. The cursor is
-    /// moved after the text written, or at the end position in the terminal if there's no room
-    /// left.
+    /// moved after the text written.
     fn write_in_color(&mut self, s: &str, color: ColorPair) {
         self.write_colored(s, repeat(color));
     }
 
     /// Writes text string to the terminal at current position, with colors of consecutive
     /// characters taken from the iterator. If there are less colors in the iterator than letters
-    /// in the text, the output will be truncated. The cursor is moved after the text written, or at
-    /// the end position in the terminal if there's no room left.
+    /// in the text, the output will be truncated. The cursor is moved after the text written.
     #[allow(unused_must_use)]
     fn write_colored<T>(&mut self, s: &str, colors: T) where T: Iterator<Item=ColorPair> {
         let (max_x, max_y) = self.size();
@@ -76,10 +73,9 @@ pub trait Terminal {
         self.present();
     }
 
-    /// Prints characters in single line starting at given coordinates. starting at given
-    /// coordinates. Mainly used by Window::draw() implementations. Lines are truncated at newline
-    /// character or when the line exceeds terminal length. The result isn't shown until present()
-    /// is called.
+    /// Prints characters in single line starting at given coordinates. Mainly used by
+    /// Window::draw() implementations. Lines are truncated at newline character or when the line
+    /// exceeds terminal length. The result isn't shown until present() is called.
     fn print_at<T>(&mut self, x: i16, y: i16, line: T) where T: Iterator<Item=(char, ColorPair)>;
 
     /// Updates terminal contents after print_at() calls.
@@ -87,11 +83,11 @@ pub trait Terminal {
 }
 
 #[cfg(windows)]
-mod windows;
+mod winapi;
 #[cfg(windows)]
-pub use self::windows::SystemTerminal;
+pub use self::winapi::SystemTerminal;
 #[cfg(windows)]
-pub use self::windows::init_terminal;
+pub use self::winapi::init_terminal;
 
 #[cfg(unix)]
 mod ncurses;
