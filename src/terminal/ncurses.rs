@@ -1,4 +1,5 @@
 extern crate ncurses;
+use std::cmp::{min, max};
 use std::mem::uninitialized;
 use std::ptr::null_mut;
 use color::ColorPair;
@@ -62,12 +63,25 @@ impl Terminal for SystemTerminal {
     fn set_default_color(&mut self, color: ColorPair) {
         self.default_color = color.compose(self.default_color);
     }
-
-    fn write_colored<T>(&mut self, s: &str, colors: T) where T: Iterator<Item=ColorPair> {
-        for (ch, co) in s.chars().zip(colors) {
+    
+    #[allow(unused_must_use)]
+    fn print_at<T>(&mut self, x: i16, y: i16, line: T) where T: Iterator<Item=(char, ColorPair)> {
+        let (max_x, max_y) = self.size();
+        if y < 0 || y as u16 > max_y {
+            return;
+        }
+        let (old_x, old_y) = self.get_cursor_pos();
+        self.set_cursor_pos(min(max(0, x) as u16, max_x - 1), y as u16);
+        
+        let s = max(0 - x, 0) as usize;
+        for (ch, co) in line.skip(s).take_while(|&(c, _)| c != '\n') {
             set_color(co.compose(self.default_color));
             ncurses::addch(ch as u64);
         }
+        self.set_cursor_pos(old_x, old_y);
+    }
+    
+    fn present(&mut self) {
         ncurses::refresh();
     }
 }
